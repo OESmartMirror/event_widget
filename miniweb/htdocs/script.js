@@ -3,6 +3,7 @@ var condition = null;
 async function EventUpdate() {
 	await deleteAllRow();
 	await objUpdate();
+	nowEvent();
 }
 
 function nowEvent() {
@@ -20,10 +21,15 @@ function nowEvent() {
 		if (tempDateStart[0] == yyyy && tempDateStart[1] == mm &&tempDateStart[2] == dd) {
 			if (tempTimeStart[0] == h) {
 				if (m == (tempTimeStart[1]-5)) {
+					document.getElementById(events[i].id).classList.add("warning")
 					condition = "warning"
 				} else if (m == tempTimeStart[1]){
+					document.getElementById(events[i].id).classList.remove("warning")
+					document.getElementById(events[i].id).classList.add("active")
 					condition = "active"
 				} else if (m > tempTimeEnd[1]) {
+					document.getElementById(events[i].id).classList.remove("warning")
+					document.getElementById(events[i].id).classList.remove("active")
 					events.shift();
 				}
 			}
@@ -33,6 +39,7 @@ function nowEvent() {
 
 var events = [
   /*{
+	"id": "genEventId()",
     "start_date": "2020,02,29;8,30",
     "end_date": "2020,02,29;12,30",
     "event_name": "Meeting",
@@ -46,35 +53,23 @@ function objUpdate() {
       console.log('Something went wrong: ' + err);
     } else {
 	  
-	  for (i=0;i < data.length && 8; i++) {
+	  for (i=0;i < data.length || 8; i++) {
 		events.push({
+			id: genEventId(parseToTime(data[i].start_date),data[i].event_name,data[i].event_location),
 			start_date:data[i].start_date,
 			end_date:data[i].end_date,
 			event_name:data[i].event_name,
-			event_location:data[i].event_location
+			event_location:data[i].event_location,
 	    });
-		newRow('eventTable', parseToTime(events[i].start_date)+"-"+parseToTime(events[i].end_date), events[i].event_name, events[i].event_location, condition);
+		newRow('eventTable', parseToTime(events[i].start_date)+"-"+parseToTime(events[i].end_date), events[i].event_name, events[i].event_location);
 	  }
     }
   });
 }
 
-var newRow = function(tableName, first, second, third, condition) {
+var newRow = function(tableName, first, second, third) {
   var tableRef = document.getElementById(tableName).getElementsByTagName('tbody')[0];
   var newRow   = tableRef.insertRow(tableRef.rows.length);
-  
-  nowEvent();
-  
-  switch(condition) {
-	  case "warning":
-	  newRow.id="warning"
-	  break;
-	  case "active":
-	  newRow.id="active"
-	  break;
-	  default:
-	  break;
-  }
   
   var newCell  = newRow.insertCell(0);
   var newText  = document.createTextNode(first)
@@ -87,10 +82,13 @@ var newRow = function(tableName, first, second, third, condition) {
   var newCell  = newRow.insertCell(2);
   var newText  = document.createTextNode(third)
   newCell.appendChild(newText);
-  
-  if (condition != null) {
-	  condition = null;
-  }
+}
+
+// parseToTime(events[i].start_date), events[i].event_name, events[i].event_location
+function genEventId(first, second, third) {
+	var genID = null;
+	genID = first.split(':')[0]+second.charAt(getRndInteger(0,second.length+1))+third.charAt(getRndInteger(0,third.length+1))+third.charAt(getRndInteger(0,third.length+1))+getRndInteger(0,10)
+	return genID;
 }
 
 function parseToTime(date) {
@@ -113,6 +111,17 @@ function deleteAllRow() {
 	new_tbody.id = "events"
 	var old_tbody = document.getElementById('events');
 	old_tbody.parentNode.replaceChild(new_tbody,old_tbody);
+}
+
+function deleteRowIfModified() {
+	var new_tbody = document.createElement('tbody');
+	new_tbody.id = "events"
+	var old_tbody = document.getElementById('events');
+	old_tbody.parentNode.replaceChild(new_tbody,old_tbody);
+}
+
+function getRndInteger(min, max) {
+  return Math.floor(Math.random() * (max - min) ) + min;
 }
 
 var getJSON = function(url, callback) {
